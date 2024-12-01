@@ -5,6 +5,8 @@
 import argparse
 
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 import time
@@ -16,7 +18,7 @@ class LinearModel(object):
         self.W = np.zeros((n_classes, n_features))
 
     def update_weight(self, x_i, y_i, **kwargs):
-        raise NotImplementedError
+        pass
 
     def train_epoch(self, X, y, **kwargs):
         for x_i, y_i in zip(X, y):
@@ -46,7 +48,12 @@ class Perceptron(LinearModel):
         y_i (scalar): the gold label for that example
         other arguments are ignored
         """
-        raise NotImplementedError # Q1.1 (a)
+        # Q1.1 (a)
+        eta = kwargs.get("learning_rate", 1)
+        y_i_hat = np.argmax(self.W.dot(x_i))
+        if y_i_hat != y_i:
+            self.W[y_i, :] += eta * x_i
+            self.W[y_i_hat] -= eta * x_i
 
 
 class LogisticRegression(LinearModel):
@@ -95,7 +102,6 @@ def plot(epochs, train_accs, val_accs, filename=None):
     plt.legend()
     if filename:
         plt.savefig(filename, bbox_inches='tight')
-    plt.show()
 
 def plot_loss(epochs, loss, filename=None):
     plt.xlabel('Epoch')
@@ -104,7 +110,6 @@ def plot_loss(epochs, loss, filename=None):
     plt.legend()
     if filename:
         plt.savefig(filename, bbox_inches='tight')
-    plt.show()
 
 
 def plot_w_norm(epochs, w_norms, filename=None):
@@ -114,7 +119,6 @@ def plot_w_norm(epochs, w_norms, filename=None):
     plt.legend()
     if filename:
         plt.savefig(filename, bbox_inches='tight')
-    plt.show()
 
 
 def main():

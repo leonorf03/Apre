@@ -14,7 +14,7 @@ def configure_seed(seed):
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
 
-def load_dataset(data_path, bias=False):
+def load_dataset(data_path = 'intel_landscapes.npz', bias=False):
     data = np.load(data_path)
 
     train_X = data["train_images"].reshape([data["train_images"].shape[0], -1])/256
