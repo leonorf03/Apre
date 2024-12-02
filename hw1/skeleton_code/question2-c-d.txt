@@ -1,0 +1,15 @@
+c)
+Regularization significantly impacts the L2-norm of weights in logistic regression. In the regularized model, 
+the weight norms start smaller and have a gradual, small increase over epochs showing the effect of regularization, 
+favoring the weights related to more important features, and decreasing the weights of less important features. 
+In the model without l2 regularization, the weight norms increase rapidly and are significantly larger. 
+Regularization constrains the weights by penalizing large values, which helps stabilize the training process and 
+prevents overfitting. 
+
+d)
+If L1 regularization was used instead of L2 regularization, the weights at the end of training would exhibit greater sparsity. 
+L1 regularization penalizes the absolute values of the weights, leading many to be driven to exact zeros, effectively 
+excluding less important features and performing inherent feature selection. In contrast to L2, which spreads small 
+weights across many features, L1 focuses on a subset of predictive features, assigning zero weight to the rest. 
+The weights of important features in an L1-regularized model might also be larger in magnitude compared to L2, 
+as L1 does not penalize large weights as aggressively. This results in a more interpretable, sparse model.

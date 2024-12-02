@@ -12,6 +12,9 @@ import matplotlib.pyplot as plt
 import time
 import utils
 
+def softmax(x):
+    #x = x - np.max(x)
+    return np.exp(x) / np.sum(np.exp(x))
 
 class LinearModel(object):
     def __init__(self, n_classes, n_features, **kwargs):
@@ -63,8 +66,19 @@ class LogisticRegression(LinearModel):
         y_i: the gold label for that example
         learning_rate (float): keep it at the default value for your plots
         """
-        raise NotImplementedError # Q1.2 (a,b)
+        # Q1.2 (a,b)
+        if(l2_penalty == 0):
+            y_hat_i = softmax(self.W.dot(x_i))
+            y_i_one_hot = np.zeros(y_hat_i.shape)
+            y_i_one_hot[y_i] = 1
+            self.W = self.W + learning_rate * (y_i_one_hot - y_hat_i)[:, None].dot(x_i[:, None].T)
+        else:
+            y_hat_i = softmax(self.W.dot(x_i)) 
+            y_i_one_hot = np.zeros(y_hat_i.shape)  
+            y_i_one_hot[y_i] = 1
 
+            gradient = (y_i_one_hot - y_hat_i)[:, None].dot(x_i[:, None].T) - l2_penalty * self.W
+            self.W = self.W + learning_rate * gradient
 
 class MLP(object):
     def __init__(self, n_classes, n_features, hidden_size):
