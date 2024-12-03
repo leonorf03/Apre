@@ -13,8 +13,13 @@ import time
 import utils
 
 def softmax(x):
-    #x = x - np.max(x)
-    return np.exp(x) / np.sum(np.exp(x))
+    x = x - np.max(x)  # Subtract max value for numerical stability
+    exp_x = np.exp(x)
+    return exp_x / np.sum(exp_x, axis=0, keepdims=True)
+
+
+def relu(x):
+	return np.maximum(0, x)
 
 class LinearModel(object):
     def __init__(self, n_classes, n_features, **kwargs):
@@ -80,15 +85,116 @@ class LogisticRegression(LinearModel):
             gradient = (y_i_one_hot - y_hat_i)[:, None].dot(x_i[:, None].T) - l2_penalty * self.W
             self.W = self.W + learning_rate * gradient
 
+"""
+class MLP(object):
+    # Q3.2b. This MLP skeleton code allows the MLP to be used in place of the
+    # linear models with no changes to the training loop or evaluation code
+    # in main().
+    def __init__(self, n_classes, n_features, hidden_size):
+        # Initialize an MLP with a single hidden layer.
+        units = [n_features, hidden_size, n_classes]
+        self.W = [np.random.normal(0.1, 0.01, (units[1], units[0])), 
+                  np.random.normal(0.1, 0.01, (units[2], units[1]))]
+        self.b = [np.zeros(units[1]), np.zeros(units[2])]
+
+    def predict(self, X):
+        # Compute the forward pass of the network. At prediction time, there is
+        # no need to save the values of hidden nodes, whereas this is required
+        # at training time.
+        num_layers = len(self.W)
+        hiddens = []
+        for i in range(num_layers):
+            h = X if i == 0 else hiddens[i-1]
+            z = self.W[i].dot(h) + self.b[i]
+            if i < num_layers-1:  # Assume the output layer has no activation.
+                hiddens.append(relu(z))
+        output = z
+        # For classification this is a vector of logits (label scores).
+        # For regression this is a vector of predictions.
+        return output, hiddens
+
+    def evaluate(self, x, y):
+        
+        ##X (n_examples x n_features)
+        ##y (n_examples): gold labels
+        
+        # Identical to LinearModel.evaluate()
+        accuracy = 0
+        for x_i, y_i in zip(x, y):
+            predicted_labels, _ = self.predict(x_i)
+            accuracy += np.argmax(predicted_labels) == y_i
+        return accuracy / x.shape[0]
+
+    def backward(self, x, y, output, hiddens, loss_function='cross_entropy'):
+        
+        grad_weights = []
+        grad_biases = []
+        
+        for i in range(len(self.W) - 1, -1, -1):
+            h = x if i == 0 else hiddens[i-1]
+            if i == len(self.W) - 1:
+                if loss_function == 'cross_entropy':
+                    grad_z = softmax(output) - y
+                elif loss_function == 'squared':
+                    grad_z = output - y
+            else:
+                relu_derivs = np.array([k > 0 for k in hiddens[i-1]]) # RELU derivative
+                grad_z = self.W[i+1].T.dot(grad_z) * relu_derivs
+
+            # Gradient of hidden parameters.
+            grad_weights.append(grad_z[:, None].dot(h[:, None].T))
+            grad_biases.append(grad_z)
+
+        grad_weights.reverse()
+        grad_biases.reverse()
+        return grad_weights, grad_biases
+
+    def update_parameters(self, grad_weights, grad_biases, learning_rate): 
+        for i in range(len(self.W)):
+            self.W[i] -= learning_rate * grad_weights[i]
+            self.b[i] -= learning_rate * grad_biases[i]
+
+    def train_epoch(self, X, y, learning_rate=0.001, loss_function='cross_entropy'):
+        total_loss = 0
+        for x_i, y_i in zip(X, y):
+            output, hiddens = self.predict(x_i)
+
+            # Create one-hot encoding for the target
+            y_i_one_hot = np.zeros(output.shape)
+            y_i_one_hot[y_i] = 1
+
+            # Compute gradients
+            grad_weights, grad_biases = self.backward(x_i, y_i_one_hot, output, hiddens, loss_function=loss_function)
+            self.update_parameters(grad_weights, grad_biases, learning_rate=learning_rate)
+
+            # Compute the cross-entropy loss with epsilon to avoid log(0)
+            total_loss += -np.sum(y_i_one_hot * np.log(softmax(output) + 1e-10))
+
+        return total_loss / len(X)  # Return average loss
+"""
+
 class MLP(object):
     def __init__(self, n_classes, n_features, hidden_size):
         # Initialize an MLP with a single hidden layer.
-        raise NotImplementedError # Q1.3 (a)
+        # Q1.3 (a)
+        units = [n_features, hidden_size, n_classes]
+        self.W = [np.random.normal(0.1, 0.01, (units[1], units[0])), 
+                  np.random.normal(0.1, 0.01, (units[2], units[1]))]
+        self.b = [np.zeros(units[1]), np.zeros(units[2])]
 
     def predict(self, X):
         # Compute the forward pass of the network. At prediction time, there is
         # no need to save the values of hidden nodes.
-        raise NotImplementedError # Q1.3 (a)
+        # Q1.3 (a)
+        num_layers = len(self.W)
+        hiddens = []
+        for i in range(num_layers):
+            h = X if i == 0 else hiddens[i-1]
+            z = self.W[i].dot(h) + self.b[i]
+            if i < num_layers-1:  # Output layer has no activation
+                hiddens.append(relu(z))
+        output = z # Last layer
+        return output, hiddens
 
     def evaluate(self, X, y):
         """
@@ -96,16 +202,65 @@ class MLP(object):
         y (n_examples): gold labels
         """
         # Identical to LinearModel.evaluate()
+        """
         y_hat = self.predict(X)
         n_correct = (y == y_hat).sum()
         n_possible = y.shape[0]
         return n_correct / n_possible
+        """
+        accuracy = 0
+        for x_i, y_i in zip(X, y):
+            predicted_labels, _ = self.predict(x_i)
+            accuracy += np.argmax(predicted_labels) == y_i
+        return accuracy / X.shape[0]
+    
+    def backward(self, x, y, output, hiddens, loss_function='cross_entropy'):
+        grad_weights = []
+        grad_biases = []
+        
+        for i in range(len(self.W) - 1, -1, -1):
+            h = x if i == 0 else hiddens[i-1]
+            if i == len(self.W) - 1:
+                if loss_function == 'cross_entropy':
+                    grad_z = softmax(output) - y
+                # elif loss_function == 'squared':
+                #    grad_z = output - y
+            else:
+                relu_derivs = np.array([k > 0 for k in hiddens[i-1]]) # RELU derivative
+                grad_z = self.W[i+1].T.dot(grad_z) * relu_derivs
+
+            # Gradient of hidden parameters.
+            grad_weights.append(grad_z[:, None].dot(h[:, None].T))
+            grad_biases.append(grad_z)
+
+        grad_weights.reverse()
+        grad_biases.reverse()
+        return grad_weights, grad_biases
+    
+    def update_params(self, grad_weights, grad_biases, learning_rate): 
+        for i in range(len(self.W)):
+            self.W[i] -= learning_rate * grad_weights[i]
+            self.b[i] -= learning_rate * grad_biases[i]
 
     def train_epoch(self, X, y, learning_rate=0.001, **kwargs):
         """
         Dont forget to return the loss of the epoch.
         """
-        raise NotImplementedError # Q1.3 (a)
+        # Q1.3 (a)
+        total_loss = 0
+        for x_i, y_i in zip(X, y):
+            output, hiddens = self.predict(x_i)
+
+            y_i_one_hot = np.zeros(output.shape)
+            y_i_one_hot[y_i] = 1
+
+            grad_weights, grad_biases = self.backward(x_i, y_i_one_hot, output, hiddens, 'cross_entropy')
+            self.update_params(grad_weights, grad_biases, learning_rate=learning_rate)
+
+            # Compute the cross-entropy loss with epsilon to avoid log(0)
+            total_loss += -np.sum(y_i_one_hot * np.log(softmax(output) + 1e-10))
+
+        return total_loss / len(X)  # Return average loss
 
 
 def plot(epochs, train_accs, val_accs, filename=None):
@@ -150,7 +305,7 @@ def main():
                         help="""Learning rate for parameter updates (needed for
                         logistic regression and MLP, but not perceptron)""")
     parser.add_argument('-l2_penalty', type=float, default=0.0,)
-    parser.add_argument('-data_path', type=str, default='intel_landscapes.npz',)
+    parser.add_argument('-data_path', type=str, default='intel_landscapes.v2.npz',)
     opt = parser.parse_args()
 
     utils.configure_seed(seed=42)
