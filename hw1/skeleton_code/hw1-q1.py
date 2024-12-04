@@ -177,10 +177,14 @@ class MLP(object):
     def __init__(self, n_classes, n_features, hidden_size):
         # Initialize an MLP with a single hidden layer.
         # Q1.3 (a)
-        units = [n_features, hidden_size, n_classes]
-        self.W = [np.random.normal(0.1, 0.01, (units[1], units[0])), 
-                  np.random.normal(0.1, 0.01, (units[2], units[1]))]
-        self.b = [np.zeros(units[1]), np.zeros(units[2])]
+        #units = [n_features, hidden_size, n_classes]
+        W_hidden = np.random.normal(0.1, 0.1, (hidden_size, n_features))
+        b_hidden = np.zeros(hidden_size)
+
+        W_output = np.random.normal(0.1, 0.1, (n_classes, hidden_size))
+        b_output = np.zeros(n_classes)
+        self.W = [W_hidden, W_output]
+        self.b = [b_hidden, b_output]
 
     def predict(self, X):
         # Compute the forward pass of the network. At prediction time, there is
@@ -271,6 +275,7 @@ def plot(epochs, train_accs, val_accs, filename=None):
     plt.legend()
     if filename:
         plt.savefig(filename, bbox_inches='tight')
+    plt.clf()
 
 def plot_loss(epochs, loss, filename=None):
     plt.xlabel('Epoch')
@@ -279,6 +284,7 @@ def plot_loss(epochs, loss, filename=None):
     plt.legend()
     if filename:
         plt.savefig(filename, bbox_inches='tight')
+    plt.clf()
 
 
 def plot_w_norm(epochs, w_norms, filename=None):
@@ -288,6 +294,7 @@ def plot_w_norm(epochs, w_norms, filename=None):
     plt.legend()
     if filename:
         plt.savefig(filename, bbox_inches='tight')
+    plt.clf()
 
 
 def main():
