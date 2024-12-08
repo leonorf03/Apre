@@ -8,9 +8,13 @@ import torch
 from torch.utils.data import DataLoader
 import torch.nn as nn
 from matplotlib import pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 
 import time
 import utils
+
+# run Q2.1 -  python hw1-q2.py logistic_regression -epochs 100 -batch_size 32
 
 
 class LogisticRegression(nn.Module):
@@ -30,6 +34,9 @@ class LogisticRegression(nn.Module):
         # In a pytorch module, the declarations of layers needs to come after
         # the super __init__ line, otherwise the magic doesn't work.
 
+        # Define the weights and biases for logistic regression
+        self.linear = nn.Linear(n_features, n_classes)
+
     def forward(self, x, **kwargs):
         """
         x (batch_size x n_features): a batch of training examples
@@ -44,7 +51,7 @@ class LogisticRegression(nn.Module):
         forward pass -- this is enough for it to figure out how to do the
         backward pass.
         """
-        raise NotImplementedError
+        return self.linear(x)
 
 
 class FeedforwardNetwork(nn.Module):
@@ -96,7 +103,16 @@ def train_batch(X, y, model, optimizer, criterion, **kwargs):
     This function should return the loss (tip: call loss.item()) to get the
     loss as a numerical value that is not part of the computation graph.
     """
-    raise NotImplementedError
+    optimizer.zero_grad()
+    
+    # Forward pass: predict y_hat
+    y_hat = model(X)
+    loss = criterion(y_hat, y)
+    loss.backward()
+    
+    optimizer.step()
+
+    return loss.item()
 
 
 def predict(model, X):
@@ -138,32 +154,27 @@ def plot(epochs, plottables, filename=None, ylim=None):
     if filename:
         plt.savefig(filename, bbox_inches='tight')
 
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('model',
                         choices=['logistic_regression', 'mlp'],
                         help="Which model should the script run?")
-    parser.add_argument('-epochs', default=200, type=int,
-                        help="""Number of epochs to train for. You should not
-                        need to change this value for your plots.""")
-    parser.add_argument('-batch_size', default=64, type=int,
+    parser.add_argument('-epochs', default=100, type=int,
+                        help="Number of epochs to train for.")
+    parser.add_argument('-batch_size', default=32, type=int,
                         help="Size of training batch.")
-    parser.add_argument('-hidden_size', type=int, default=200)
-    parser.add_argument('-layers', type=int, default=2)
-    parser.add_argument('-learning_rate', type=float, default=0.002)
-    parser.add_argument('-l2_decay', type=float, default=0.0)
-    parser.add_argument('-dropout', type=float, default=0.3)
-    parser.add_argument('-momentum', type=float, default=0.0)
-    parser.add_argument('-activation',
-                        choices=['tanh', 'relu'], default='relu')
-    parser.add_argument('-optimizer',
-                        choices=['sgd', 'adam'], default='sgd')
-    parser.add_argument('-data_path', type=str, default='intel_landscapes.npz',)
+    parser.add_argument('-l2_decay', type=float, default=0.01)
+    parser.add_argument('-momentum', type=float, default=0.0,
+                        help="Momentum factor for SGD optimizer (default: 0.0).")
+    parser.add_argument('-optimizer', type=str, default='sgd',
+                        choices=['sgd', 'adam'],
+                        help="Choose optimizer for training (default: sgd).")
+    parser.add_argument('-data_path', type=str, default='intel_landscapes.v2.npz',)
     opt = parser.parse_args()
 
     utils.configure_seed(seed=42)
 
+    # Load dataset
     data = utils.load_dataset(opt.data_path)
     dataset = utils.ClassificationDataset(data)
     train_dataloader = DataLoader(
@@ -171,8 +182,86 @@ def main():
     dev_X, dev_y = dataset.dev_X, dataset.dev_y
     test_X, test_y = dataset.test_X, dataset.test_y
 
-    n_classes = torch.unique(dataset.y).shape[0]  # 10
+    n_classes = torch.unique(dataset.y).shape[0]
     n_feats = dataset.X.shape[1]
+
+    # Learning rates to evaluate
+    learning_rates = [0.00001, 0.001, 0.1]
+    best_final_val_acc = 0
+    best_lr = None
+    best_test_acc = 0
+
+    # Store results for plotting
+    results = {}
+
+    print("Learning Rate Tuning Results:\n")
+    for lr in learning_rates:
+        print(f"\nTraining with learning rate: {lr}")
+        # Initialize model and optimizer for each learning rate
+        model = LogisticRegression(n_classes, n_feats)
+        optimizer = torch.optim.SGD(
+            model.parameters(), lr=lr, weight_decay=opt.l2_decay
+        )
+        criterion = nn.CrossEntropyLoss()
+
+        # Training loop for current learning rate
+        train_losses = []
+        valid_losses = []
+        valid_accs = []
+        for epoch in range(1, opt.epochs + 1):
+            epoch_train_losses = []
+            for X_batch, y_batch in train_dataloader:
+                loss = train_batch(X_batch, y_batch, model, optimizer, criterion)
+                epoch_train_losses.append(loss)
+
+            # Track losses and accuracy
+            train_loss = torch.tensor(epoch_train_losses).mean().item()
+            train_losses.append(train_loss)
+            val_loss, val_acc = evaluate(model, dev_X, dev_y, criterion)
+            valid_losses.append(val_loss)
+            valid_accs.append(val_acc)
+
+            # Print training progress for the current epoch
+            print(f"Epoch {epoch:03d}: Train Loss = {train_loss:.4f}, Val Loss = {val_loss:.4f}, Val Acc = {val_acc:.4f}")
+
+        # Check if this learning rate gives the best final validation accuracy
+        final_val_acc = valid_accs[-1]
+        if final_val_acc > best_final_val_acc:
+            best_final_val_acc = final_val_acc
+            best_lr = lr
+            _, best_test_acc = evaluate(model, test_X, test_y, criterion)
+
+        # Store results for plotting
+        results[lr] = {
+            "train_losses": train_losses,
+            "valid_losses": valid_losses,
+            "valid_accs": valid_accs,
+        }
+
+        # Print final results for this learning rate
+        print(f"\nLearning Rate {lr} Results:")
+        print(f"  Final Validation Accuracy: {final_val_acc:.4f}")
+        _, test_acc = evaluate(model, test_X, test_y, criterion)
+        print(f"  Test Accuracy: {test_acc:.4f}")
+
+    print("\nFinal Results:")
+    print(f"Best Learning Rate: {best_lr}")
+    print(f"Final Validation Accuracy with Best Learning Rate: {best_final_val_acc:.4f}")
+    print(f"Test Accuracy with Best Learning Rate: {best_test_acc:.4f}")
+
+    # Comparison Plot
+    epochs = torch.arange(1, opt.epochs + 1)
+    for lr, result in results.items():
+        plot(
+            epochs,
+            {"Train Loss": result["train_losses"], "Valid Loss": result["valid_losses"]},
+            filename=f"lr-{lr}-comparison-loss.pdf"
+        )
+        plot(
+            epochs,
+            {"Valid Accuracy": result["valid_accs"]},
+            filename=f"lr-{lr}-comparison-accuracy.pdf"
+        )
 
     # initialize the model
     if opt.model == 'logistic_regression':
@@ -192,12 +281,12 @@ def main():
 
     optim_cls = optims[opt.optimizer]
     optimizer = optim_cls(
-        model.parameters(), lr=opt.learning_rate, weight_decay=opt.l2_decay, momentum = opt.momentum
+        model.parameters(), lr=lr, weight_decay=opt.l2_decay, momentum=opt.momentum
     )
 
     # get a loss criterion
     criterion = nn.CrossEntropyLoss()
-
+    """
     # training loop
     epochs = torch.arange(1, opt.epochs + 1)
     train_losses = []
@@ -207,6 +296,7 @@ def main():
     start = time.time()
 
     print('initial val acc: {:.4f}'.format(evaluate(model, dev_X, dev_y, criterion)[1]))
+    print('lr atual: ' , lr)
 
     for ii in epochs:
         print('Training epoch {}'.format(ii))
@@ -234,11 +324,11 @@ def main():
 
     _, test_acc = evaluate(model, test_X, test_y, criterion)
     print('Final test acc: {:.4f}'.format(test_acc))
-
+    """
     # plot
     if opt.model == "logistic_regression":
         config = (
-            f"batch-{opt.batch_size}-lr-{opt.learning_rate}-epochs-{opt.epochs}-"
+            f"batch-{opt.batch_size}-lr-{lr}-epochs-{opt.epochs}-"
             f"l2-{opt.l2_decay}-opt-{opt.optimizer}"
         )
     else:
