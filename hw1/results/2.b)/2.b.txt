@@ -1,0 +1,203 @@
+initial train acc: 0.1562 | initial val acc: 0.1553
+Training epoch 1
+train acc: 0.4129 | val acc: 0.3882 | W norm: 1.7005
+Training epoch 2
+train acc: 0.4914 | val acc: 0.4651 | W norm: 2.2134
+Training epoch 3
+train acc: 0.4774 | val acc: 0.4430 | W norm: 2.5849
+Training epoch 4
+train acc: 0.4858 | val acc: 0.4615 | W norm: 2.8691
+Training epoch 5
+train acc: 0.4790 | val acc: 0.4573 | W norm: 3.0858
+Training epoch 6
+train acc: 0.4647 | val acc: 0.4423 | W norm: 3.2873
+Training epoch 7
+train acc: 0.5628 | val acc: 0.5000 | W norm: 3.4554
+Training epoch 8
+train acc: 0.5671 | val acc: 0.4922 | W norm: 3.5755
+Training epoch 9
+train acc: 0.4977 | val acc: 0.4416 | W norm: 3.6919
+Training epoch 10
+train acc: 0.5182 | val acc: 0.4573 | W norm: 3.7902
+Training epoch 11
+train acc: 0.4923 | val acc: 0.4373 | W norm: 3.8764
+Training epoch 12
+train acc: 0.4956 | val acc: 0.4501 | W norm: 3.9377
+Training epoch 13
+train acc: 0.5039 | val acc: 0.4530 | W norm: 4.0000
+Training epoch 14
+train acc: 0.5773 | val acc: 0.5007 | W norm: 4.0441
+Training epoch 15
+train acc: 0.5028 | val acc: 0.4259 | W norm: 4.0694
+Training epoch 16
+train acc: 0.5922 | val acc: 0.5007 | W norm: 4.1153
+Training epoch 17
+train acc: 0.4865 | val acc: 0.4266 | W norm: 4.1604
+Training epoch 18
+train acc: 0.5780 | val acc: 0.5071 | W norm: 4.1793
+Training epoch 19
+train acc: 0.5149 | val acc: 0.4409 | W norm: 4.1990
+Training epoch 20
+train acc: 0.4244 | val acc: 0.3853 | W norm: 4.2002
+Training epoch 21
+train acc: 0.4501 | val acc: 0.4124 | W norm: 4.2249
+Training epoch 22
+train acc: 0.5546 | val acc: 0.4886 | W norm: 4.2518
+Training epoch 23
+train acc: 0.5345 | val acc: 0.4815 | W norm: 4.2637
+Training epoch 24
+train acc: 0.4434 | val acc: 0.3846 | W norm: 4.2736
+Training epoch 25
+train acc: 0.5899 | val acc: 0.4972 | W norm: 4.2887
+Training epoch 26
+train acc: 0.5268 | val acc: 0.4672 | W norm: 4.2886
+Training epoch 27
+train acc: 0.5814 | val acc: 0.4957 | W norm: 4.2774
+Training epoch 28
+train acc: 0.4954 | val acc: 0.4323 | W norm: 4.2902
+Training epoch 29
+train acc: 0.4067 | val acc: 0.3818 | W norm: 4.3011
+Training epoch 30
+train acc: 0.4371 | val acc: 0.3697 | W norm: 4.3004
+Training epoch 31
+train acc: 0.5666 | val acc: 0.4872 | W norm: 4.3082
+Training epoch 32
+train acc: 0.4975 | val acc: 0.4259 | W norm: 4.3257
+Training epoch 33
+train acc: 0.4573 | val acc: 0.4124 | W norm: 4.3259
+Training epoch 34
+train acc: 0.5676 | val acc: 0.4879 | W norm: 4.3255
+Training epoch 35
+train acc: 0.5843 | val acc: 0.4893 | W norm: 4.3283
+Training epoch 36
+train acc: 0.5528 | val acc: 0.4922 | W norm: 4.3324
+Training epoch 37
+train acc: 0.5326 | val acc: 0.4708 | W norm: 4.3214
+Training epoch 38
+train acc: 0.5677 | val acc: 0.5014 | W norm: 4.3218
+Training epoch 39
+train acc: 0.5310 | val acc: 0.4665 | W norm: 4.3286
+Training epoch 40
+train acc: 0.5036 | val acc: 0.4523 | W norm: 4.3138
+Training epoch 41
+train acc: 0.5500 | val acc: 0.4786 | W norm: 4.3252
+Training epoch 42
+train acc: 0.4720 | val acc: 0.4046 | W norm: 4.3194
+Training epoch 43
+train acc: 0.5793 | val acc: 0.4950 | W norm: 4.3195
+Training epoch 44
+train acc: 0.5313 | val acc: 0.4736 | W norm: 4.3246
+Training epoch 45
+train acc: 0.5802 | val acc: 0.4979 | W norm: 4.3240
+Training epoch 46
+train acc: 0.4245 | val acc: 0.3711 | W norm: 4.3160
+Training epoch 47
+train acc: 0.4784 | val acc: 0.4095 | W norm: 4.3165
+Training epoch 48
+train acc: 0.5429 | val acc: 0.4907 | W norm: 4.3213
+Training epoch 49
+train acc: 0.5331 | val acc: 0.4658 | W norm: 4.3170
+Training epoch 50
+train acc: 0.5458 | val acc: 0.4765 | W norm: 4.3208
+Training epoch 51
+train acc: 0.5429 | val acc: 0.4758 | W norm: 4.3375
+Training epoch 52
+train acc: 0.4907 | val acc: 0.4459 | W norm: 4.3238
+Training epoch 53
+train acc: 0.4928 | val acc: 0.4430 | W norm: 4.3186
+Training epoch 54
+train acc: 0.4485 | val acc: 0.3989 | W norm: 4.3187
+Training epoch 55
+train acc: 0.4420 | val acc: 0.4053 | W norm: 4.3196
+Training epoch 56
+train acc: 0.4941 | val acc: 0.4516 | W norm: 4.3258
+Training epoch 57
+train acc: 0.4530 | val acc: 0.3910 | W norm: 4.3244
+Training epoch 58
+train acc: 0.5380 | val acc: 0.4751 | W norm: 4.3375
+Training epoch 59
+train acc: 0.5123 | val acc: 0.4573 | W norm: 4.3355
+Training epoch 60
+train acc: 0.4139 | val acc: 0.3661 | W norm: 4.3280
+Training epoch 61
+train acc: 0.5765 | val acc: 0.5064 | W norm: 4.3231
+Training epoch 62
+train acc: 0.5626 | val acc: 0.4858 | W norm: 4.3292
+Training epoch 63
+train acc: 0.4776 | val acc: 0.4202 | W norm: 4.3197
+Training epoch 64
+train acc: 0.5311 | val acc: 0.4573 | W norm: 4.3208
+Training epoch 65
+train acc: 0.4389 | val acc: 0.4095 | W norm: 4.3276
+Training epoch 66
+train acc: 0.5123 | val acc: 0.4637 | W norm: 4.3310
+Training epoch 67
+train acc: 0.5378 | val acc: 0.4729 | W norm: 4.3348
+Training epoch 68
+train acc: 0.5407 | val acc: 0.4736 | W norm: 4.3376
+Training epoch 69
+train acc: 0.5413 | val acc: 0.4793 | W norm: 4.3330
+Training epoch 70
+train acc: 0.5427 | val acc: 0.4701 | W norm: 4.3263
+Training epoch 71
+train acc: 0.5475 | val acc: 0.4822 | W norm: 4.3236
+Training epoch 72
+train acc: 0.5439 | val acc: 0.4779 | W norm: 4.3273
+Training epoch 73
+train acc: 0.5769 | val acc: 0.4822 | W norm: 4.3236
+Training epoch 74
+train acc: 0.5565 | val acc: 0.4879 | W norm: 4.3302
+Training epoch 75
+train acc: 0.4694 | val acc: 0.4259 | W norm: 4.3204
+Training epoch 76
+train acc: 0.5416 | val acc: 0.4729 | W norm: 4.3351
+Training epoch 77
+train acc: 0.5371 | val acc: 0.4793 | W norm: 4.3379
+Training epoch 78
+train acc: 0.5648 | val acc: 0.4922 | W norm: 4.3344
+Training epoch 79
+train acc: 0.4988 | val acc: 0.4181 | W norm: 4.3254
+Training epoch 80
+train acc: 0.5804 | val acc: 0.5050 | W norm: 4.3235
+Training epoch 81
+train acc: 0.5124 | val acc: 0.4601 | W norm: 4.3325
+Training epoch 82
+train acc: 0.5572 | val acc: 0.4972 | W norm: 4.3413
+Training epoch 83
+train acc: 0.5123 | val acc: 0.4487 | W norm: 4.3201
+Training epoch 84
+train acc: 0.5850 | val acc: 0.5043 | W norm: 4.3323
+Training epoch 85
+train acc: 0.5207 | val acc: 0.4672 | W norm: 4.3276
+Training epoch 86
+train acc: 0.5359 | val acc: 0.4679 | W norm: 4.3181
+Training epoch 87
+train acc: 0.5473 | val acc: 0.4736 | W norm: 4.3245
+Training epoch 88
+train acc: 0.4979 | val acc: 0.4594 | W norm: 4.3267
+Training epoch 89
+train acc: 0.3641 | val acc: 0.3376 | W norm: 4.3353
+Training epoch 90
+train acc: 0.5483 | val acc: 0.4801 | W norm: 4.3246
+Training epoch 91
+train acc: 0.5561 | val acc: 0.4751 | W norm: 4.3279
+Training epoch 92
+train acc: 0.5894 | val acc: 0.5071 | W norm: 4.3245
+Training epoch 93
+train acc: 0.6017 | val acc: 0.5256 | W norm: 4.3296
+Training epoch 94
+train acc: 0.5080 | val acc: 0.4623 | W norm: 4.3403
+Training epoch 95
+train acc: 0.5667 | val acc: 0.4936 | W norm: 4.3329
+Training epoch 96
+train acc: 0.4112 | val acc: 0.3647 | W norm: 4.3309
+Training epoch 97
+train acc: 0.4629 | val acc: 0.4017 | W norm: 4.3196
+Training epoch 98
+train acc: 0.4575 | val acc: 0.4081 | W norm: 4.3193
+Training epoch 99
+train acc: 0.5297 | val acc: 0.4658 | W norm: 4.3064
+Training epoch 100
+train acc: 0.5683 | val acc: 0.4972 | W norm: 4.3217
+Training took 2 minutes and 33 seconds
+Final test acc: 0.5053
