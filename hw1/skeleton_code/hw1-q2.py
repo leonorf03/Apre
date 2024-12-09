@@ -327,7 +327,7 @@ def main():
             activation_type=default_hyperparams['activation'],
             dropout=default_hyperparams['dropout']
         )
-        optimizer = torch.optim.SGD(model.parameters(), lr=default_hyperparams['learning_rate'], weight_decay=default_hyperparams['l2_decay'])
+        optimizer = torch.optim.SGD(model.parameters(), lr=default_hyperparams['learning_rate'], weight_decay=default_hyperparams['l2_decay'], momentum=opt.momentum)
         criterion = nn.CrossEntropyLoss()
 
         train_losses_default, valid_losses_default, valid_accs_default, test_acc_default, elapsed_time = train_and_evaluate(
@@ -345,7 +345,7 @@ def main():
             activation_type=default_hyperparams['activation'],
             dropout=default_hyperparams['dropout']
         )
-        optimizer = torch.optim.SGD(model.parameters(), lr=default_hyperparams['learning_rate'], weight_decay=default_hyperparams['l2_decay'])
+        optimizer = torch.optim.SGD(model.parameters(), lr=default_hyperparams['learning_rate'], weight_decay=default_hyperparams['l2_decay'], momentum=opt.momentum)
 
         train_losses_512, valid_losses_512, valid_accs_512, test_acc_512, elapsed_time_512 = train_and_evaluate(
             model, train_dataloader_512, dev_X, dev_y, test_X, test_y, criterion, optimizer, default_hyperparams['epochs']
