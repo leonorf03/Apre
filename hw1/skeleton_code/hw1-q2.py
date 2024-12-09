@@ -86,8 +86,6 @@ class FeedforwardNetwork(nn.Module):
         # Activation function
         if activation_type == 'relu':
             self.activation = nn.ReLU()
-        elif activation_type == 'tanh':
-            self.activation = nn.Tanh()
         else:
             raise ValueError("Unsupported activation type")
         
@@ -203,203 +201,6 @@ def plot(epochs, plottables, filename=None, ylim=None):
         plt.ylim(ylim)
     if filename:
         plt.savefig(filename, bbox_inches='tight')
-"""
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('model',
-                        choices=['logistic_regression', 'mlp'],
-                        help="Which model should the script run?")
-    parser.add_argument('-epochs', default=100, type=int,
-                        help="Number of epochs to train for.")
-    parser.add_argument('-batch_size', default=32, type=int,
-                        help="Size of training batch.")
-    parser.add_argument('-l2_decay', type=float, default=0.01)
-    parser.add_argument('-momentum', type=float, default=0.0,
-                        help="Momentum factor for SGD optimizer (default: 0.0).")
-    parser.add_argument('-optimizer', type=str, default='sgd',
-                        choices=['sgd', 'adam'],
-                        help="Choose optimizer for training (default: sgd).")
-    parser.add_argument('-data_path', type=str, default='intel_landscapes.v2.npz',)
-    opt = parser.parse_args()
-
-    utils.configure_seed(seed=42)
-
-    # Load dataset
-    data = utils.load_dataset(opt.data_path)
-    dataset = utils.ClassificationDataset(data)
-    train_dataloader = DataLoader(
-        dataset, batch_size=opt.batch_size, shuffle=True, generator=torch.Generator().manual_seed(42))
-    dev_X, dev_y = dataset.dev_X, dataset.dev_y
-    test_X, test_y = dataset.test_X, dataset.test_y
-
-    n_classes = torch.unique(dataset.y).shape[0]
-    n_feats = dataset.X.shape[1]
-
-    # Learning rates to evaluate
-    learning_rates = [0.00001, 0.001, 0.1]
-    best_final_val_acc = 0
-    best_lr = None
-    best_test_acc = 0
-
-    # Store results for plotting
-    results = {}
-
-    print("Learning Rate Tuning Results:\n")
-    for lr in learning_rates:
-        print(f"\nTraining with learning rate: {lr}")
-        # Initialize model and optimizer for each learning rate
-        model = LogisticRegression(n_classes, n_feats)
-        optimizer = torch.optim.SGD(
-            model.parameters(), lr=lr, weight_decay=opt.l2_decay
-        )
-        criterion = nn.CrossEntropyLoss()
-
-        # Training loop for current learning rate
-        train_losses = []
-        valid_losses = []
-        valid_accs = []
-        for epoch in range(1, opt.epochs + 1):
-            epoch_train_losses = []
-            for X_batch, y_batch in train_dataloader:
-                loss = train_batch(X_batch, y_batch, model, optimizer, criterion)
-                epoch_train_losses.append(loss)
-
-            # Track losses and accuracy
-            train_loss = torch.tensor(epoch_train_losses).mean().item()
-            train_losses.append(train_loss)
-            val_loss, val_acc = evaluate(model, dev_X, dev_y, criterion)
-            valid_losses.append(val_loss)
-            valid_accs.append(val_acc)
-
-            # Print training progress for the current epoch
-            print(f"Epoch {epoch:03d}: Train Loss = {train_loss:.4f}, Val Loss = {val_loss:.4f}, Val Acc = {val_acc:.4f}")
-
-        # Check if this learning rate gives the best final validation accuracy
-        final_val_acc = valid_accs[-1]
-        if final_val_acc > best_final_val_acc:
-            best_final_val_acc = final_val_acc
-            best_lr = lr
-            _, best_test_acc = evaluate(model, test_X, test_y, criterion)
-
-        # Store results for plotting
-        results[lr] = {
-            "train_losses": train_losses,
-            "valid_losses": valid_losses,
-            "valid_accs": valid_accs,
-        }
-
-        # Print final results for this learning rate
-        print(f"\nLearning Rate {lr} Results:")
-        print(f"  Final Validation Accuracy: {final_val_acc:.4f}")
-        _, test_acc = evaluate(model, test_X, test_y, criterion)
-        print(f"  Test Accuracy: {test_acc:.4f}")
-
-    print("\nFinal Results:")
-    print(f"Best Learning Rate: {best_lr}")
-    print(f"Final Validation Accuracy with Best Learning Rate: {best_final_val_acc:.4f}")
-    print(f"Test Accuracy with Best Learning Rate: {best_test_acc:.4f}")
-
-    # Comparison Plot
-    epochs = torch.arange(1, opt.epochs + 1)
-    for lr, result in results.items():
-        plot(
-            epochs,
-            {"Train Loss": result["train_losses"], "Valid Loss": result["valid_losses"]},
-            filename=f"lr-{lr}-comparison-loss.pdf"
-        )
-        plot(
-            epochs,
-            {"Valid Accuracy": result["valid_accs"]},
-            filename=f"lr-{lr}-comparison-accuracy.pdf"
-        )
-
-    # initialize the model
-    if opt.model == 'logistic_regression':
-        model = LogisticRegression(n_classes, n_feats)
-    else:
-        model = FeedforwardNetwork(
-            n_classes,
-            n_feats,
-            opt.hidden_size,
-            opt.layers,
-            opt.activation,
-            opt.dropout
-        )
-
-    # get an optimizer
-    optims = {"adam": torch.optim.Adam, "sgd": torch.optim.SGD}
-
-    optim_cls = optims[opt.optimizer]
-    optimizer = optim_cls(
-        model.parameters(), lr=lr, weight_decay=opt.l2_decay, momentum=opt.momentum
-    )
-
-    # get a loss criterion
-    criterion = nn.CrossEntropyLoss()
-    
-    # training loop
-    epochs = torch.arange(1, opt.epochs + 1)
-    train_losses = []
-    valid_losses = []
-    valid_accs = []
-
-    start = time.time()
-
-    print('initial val acc: {:.4f}'.format(evaluate(model, dev_X, dev_y, criterion)[1]))
-    print('lr atual: ' , lr)
-
-    for ii in epochs:
-        print('Training epoch {}'.format(ii))
-        epoch_train_losses = []
-        for X_batch, y_batch in train_dataloader:
-            loss = train_batch(
-                X_batch, y_batch, model, optimizer, criterion)
-            epoch_train_losses.append(loss)
-
-        epoch_train_loss = torch.tensor(epoch_train_losses).mean().item()
-        val_loss, val_acc = evaluate(model, dev_X, dev_y, criterion)
-
-        print('train loss: {:.4f} | val loss: {:.4f} | val acc: {:.4f}'.format(
-            epoch_train_loss, val_loss, val_acc
-        ))
-
-        train_losses.append(epoch_train_loss)
-        valid_losses.append(val_loss)
-        valid_accs.append(val_acc)
-
-    elapsed_time = time.time() - start
-    minutes = int(elapsed_time // 60)
-    seconds = int(elapsed_time % 60)
-    print('Training took {} minutes and {} seconds'.format(minutes, seconds))
-
-    _, test_acc = evaluate(model, test_X, test_y, criterion)
-    print('Final test acc: {:.4f}'.format(test_acc))
-    
-    # plot
-    if opt.model == "logistic_regression":
-        config = (
-            f"batch-{opt.batch_size}-lr-{lr}-epochs-{opt.epochs}-"
-            f"l2-{opt.l2_decay}-opt-{opt.optimizer}"
-        )
-    else:
-        config = (
-            f"batch-{opt.batch_size}-lr-{opt.learning_rate}-epochs-{opt.epochs}-"
-            f"hidden-{opt.hidden_size}-dropout-{opt.dropout}-l2-{opt.l2_decay}-"
-            f"layers-{opt.layers}-act-{opt.activation}-opt-{opt.optimizer}-mom-{opt.momentum}"
-        )
-
-    losses = {
-        "Train Loss": train_losses,
-        "Valid Loss": valid_losses,
-    }
-
-    plot(epochs, losses, filename=f'{opt.model}-training-loss-{config}.pdf')
-    accuracy = { "Valid Accuracy": valid_accs }
-    plot(epochs, accuracy, filename=f'{opt.model}-validation-accuracy-{config}.pdf')
-
-if __name__ == '__main__':
-    main()
-"""
 
 def main():
     parser = argparse.ArgumentParser()
@@ -517,7 +318,7 @@ def main():
         }
 
         # Train with Default Hyperparameters
-        train_dataloader = DataLoader(dataset, batch_size=default_hyperparams['batch_size'], shuffle=True)
+        train_dataloader = DataLoader(dataset, batch_size=default_hyperparams['batch_size'], shuffle=True, generator = torch.Generator().manual_seed(42))
         model = FeedforwardNetwork(
             n_classes=n_classes,
             n_features=n_feats,
@@ -529,13 +330,13 @@ def main():
         optimizer = torch.optim.SGD(model.parameters(), lr=default_hyperparams['learning_rate'], weight_decay=default_hyperparams['l2_decay'])
         criterion = nn.CrossEntropyLoss()
 
-        train_losses_default, valid_losses_default, valid_accs_default, test_acc_default, _ = train_and_evaluate(
+        train_losses_default, valid_losses_default, valid_accs_default, test_acc_default, elapsed_time = train_and_evaluate(
             model, train_dataloader, dev_X, dev_y, test_X, test_y, criterion, optimizer, default_hyperparams['epochs']
         )
-
+        
         print("Training Feedforward Network with batch 512...")
         # Train with batch_size=512
-        train_dataloader_512 = DataLoader(dataset, batch_size=512, shuffle=True)
+        train_dataloader_512 = DataLoader(dataset, batch_size=512, shuffle=True, generator = torch.Generator().manual_seed(42))
         model = FeedforwardNetwork(
             n_classes=n_classes,
             n_features=n_feats,
@@ -546,7 +347,7 @@ def main():
         )
         optimizer = torch.optim.SGD(model.parameters(), lr=default_hyperparams['learning_rate'], weight_decay=default_hyperparams['l2_decay'])
 
-        train_losses_512, valid_losses_512, valid_accs_512, test_acc_512, _ = train_and_evaluate(
+        train_losses_512, valid_losses_512, valid_accs_512, test_acc_512, elapsed_time_512 = train_and_evaluate(
             model, train_dataloader_512, dev_X, dev_y, test_X, test_y, criterion, optimizer, default_hyperparams['epochs']
         )
 
@@ -570,7 +371,9 @@ def main():
 
         print("\nFeedforward Network Results:")
         print(f"Default Batch Size: Test Accuracy = {test_acc_default:.4f}")
+        print(f"Default Batch Size: Time of Execution = {elapsed_time:.4f}")
         print(f"Batch Size 512: Test Accuracy = {test_acc_512:.4f}")
+        print(f"Batch Size 512: Time of Execution = {elapsed_time_512:.4f}")
 
 if __name__ == "__main__":
     main()
