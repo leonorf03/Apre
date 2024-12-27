@@ -87,7 +87,22 @@ class Encoder(nn.Module):
         # - Use torch.nn.utils.rnn.pad_packed_sequence to unpack the packed sequences
         #   (after passing them to the LSTM)
         #############################################
-        
+        embedded_src = self.embedding(src)
+        embedded_src = self.dropout(embedded_src)
+
+        # Pack padded sequence
+        packed_src = pack(embedded_src, lengths.cpu(), batch_first=True, enforce_sorted=False)
+
+        # Pass through the LSTM
+        packed_output, (hidden, cell) = self.lstm(packed_src)
+
+        # Unpack the output
+        output, _ = unpack(packed_output, batch_first=True)
+
+        # Apply dropout to the output
+        output = self.dropout(output)
+
+        return output, (hidden, cell)
 
         #############################################
         # END OF YOUR CODE
@@ -95,7 +110,6 @@ class Encoder(nn.Module):
         # enc_output: (batch_size, max_src_len, hidden_size)
         # final_hidden: tuple with 2 tensors
         # each tensor is (num_layers * num_directions, batch_size, hidden_size)
-        raise NotImplementedError("Add your implementation.")
 
 
 class Decoder(nn.Module):
@@ -140,8 +154,21 @@ class Decoder(nn.Module):
         # bidirectional encoder outputs are concatenated, so we may need to
         # reshape the decoder states to be of size (num_layers, batch_size, 2*hidden_size)
         # if they are of size (num_layers*num_directions, batch_size, hidden_size)
-        if dec_state[0].shape[0] == 2:
-            dec_state = reshape_state(dec_state)
+        #if dec_state[0].shape[0] == 2:
+        #    dec_state = reshape_state(dec_state)
+        embedded_tgt = self.embedding(tgt)
+        embedded_tgt = self.dropout(embedded_tgt)  # Apply dropout to embeddings
+
+        outputs = []
+        for t in range(tgt.size(1)):  # Loop over each time step
+            input_t = embedded_tgt[:, t, :].unsqueeze(1)
+            output, dec_state = self.lstm(input_t, dec_state)
+            output = self.dropout(output)  # Apply dropout to the LSTM output
+            outputs.append(output)
+
+        outputs = torch.cat(outputs, dim=1)  # Concatenate outputs along the time dimension
+
+        return outputs, dec_state
 
         #############################################
         # TODO: Implement the forward pass of the decoder
@@ -168,7 +195,7 @@ class Decoder(nn.Module):
         # each tensor is (num_layers, batch_size, hidden_size)
         raise NotImplementedError("Add your implementation.")
 
-
+"""
 class Seq2Seq(nn.Module):
     def __init__(
         self,
@@ -200,5 +227,28 @@ class Seq2Seq(nn.Module):
         output, dec_hidden = self.decoder(
             tgt, dec_hidden, encoder_outputs, src_lengths
         )
+
+        return self.generator(output), dec_hidden
+"""
+class Seq2Seq(nn.Module):
+    def __init__(self, encoder, decoder):
+        super(Seq2Seq, self).__init__()
+        self.encoder = encoder
+        self.decoder = decoder
+        self.generator = nn.Linear(decoder.hidden_size, decoder.tgt_vocab_size)
+        self.generator.weight = self.decoder.embedding.weight
+
+    def forward(self, src, src_lengths, tgt, dec_hidden=None):
+        # Pass through the encoder
+        encoder_outputs, final_enc_state = self.encoder(src, src_lengths)
+
+        # Reshape the encoder hidden state if it's bidirectional
+        if final_enc_state[0].shape[0] == 2:  # If bidirectional
+            dec_hidden = reshape_state(final_enc_state)
+        else:
+            dec_hidden = final_enc_state
+
+        # Pass through the decoder
+        output, dec_hidden = self.decoder(tgt, dec_hidden, encoder_outputs, src_lengths)
 
         return self.generator(output), dec_hidden
