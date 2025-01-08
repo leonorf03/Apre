@@ -1,0 +1,7 @@
+The difference in the number of trainable parameters between the two CNNs arises from the modifications in the second network. 
+
+The use of batch normalization both in the convolutional blocks and in the MLP block contributes to the better performance in the second CNN, since batch normalization allows for fast convergence, improved generalization, and better accuracy overall.
+
+Replacing the transformation of flattening the output of the convolutional blocks with a global average pooling layer leads to the major reduction in parameters, due to focusing on extracting essential features. This change drastically reduces the size of the feature map before the fully connected layers, which results in a significant reduction in the number of input connections and trainable parameters in the dense layers. This is the primary reason for the substantial reduction in the parameter count of the second network compared to the first.
+
+The combination of these changes makes the second network achieve better performance, despite having fewer trainable parameters.

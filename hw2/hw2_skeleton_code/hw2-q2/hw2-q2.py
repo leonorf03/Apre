@@ -9,6 +9,8 @@ from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.nn.functional as F
 from matplotlib import pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 import numpy as np
 
 import utils
@@ -19,31 +21,39 @@ class ConvBlock(nn.Module):
             self,
             in_channels,
             out_channels,
-            kernel_size,
-            padding=None,
+            kernel_size=3,
+            padding=1,
             maxpool=True,
             batch_norm=True,
-            dropout=0.0
+            dropout=0.1 
         ):
         super().__init__()
 
         # Q2.1. Initialize convolution, maxpool, activation and dropout layers 
-        
-        
-        # Q2.2 Initialize batchnorm layer 
-        
-        raise NotImplementedError
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=1, padding=padding)
 
+        self.activation = nn.ReLU()
+
+        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
+
+        self.dropout = nn.Dropout(dropout)
+
+        # Q2.2 Initialize batchnorm layer 
+        self.batch_norm = nn.BatchNorm2d(out_channels) if batch_norm else nn.Identity()
+        
     def forward(self, x):
         # input for convolution is [b, c, w, h]
-        
         # Implement execution of layers in right order
-
-        raise NotImplementedError
+        x = self.conv(x)
+        x = self.batch_norm(x)
+        x = self.activation(x)
+        x = self.maxpool(x)
+        x = self.dropout(x)
+        return x
 
 
 class CNN(nn.Module):
-    def __init__(self, dropout_prob, maxpool=True, batch_norm=True, conv_bias=True):
+    def __init__(self, dropout_prob,n_classes, maxpool=True, batch_norm=True, conv_bias=True):
         super(CNN, self).__init__()
         channels = [3, 32, 64, 128]
         fc1_out_dim = 1024
@@ -52,23 +62,63 @@ class CNN(nn.Module):
         self.batch_norm = batch_norm
 
         # Initialize convolutional blocks
+        self.conv1 = ConvBlock(channels[0], channels[1], maxpool=maxpool, batch_norm=batch_norm, dropout=dropout_prob)
+        self.conv2 = ConvBlock(channels[1], channels[2], maxpool=maxpool, batch_norm=batch_norm, dropout=dropout_prob)
+        self.conv3 = ConvBlock(channels[2], channels[3], maxpool=maxpool, batch_norm=batch_norm, dropout=dropout_prob)
         
+        # Global Average Pooling layer
+        self.global_avg_pool = nn.AdaptiveAvgPool2d((1, 1))
+
         # Initialize layers for the MLP block
+        if batch_norm:
+            self.fc1 = nn.Linear(channels[3], fc1_out_dim)
+        else:
+            self.fc1 = nn.Linear(channels[3] * ((48 // (2 ** 3)) ** 2), fc1_out_dim)
+
+        self.fc1_activation = nn.ReLU()
+        self.fc1_dropout = nn.Dropout(dropout_prob)
+        self.fc1_batch_norm = nn.BatchNorm1d(fc1_out_dim) if batch_norm else nn.Identity()
+
+        self.fc2 = nn.Linear(fc1_out_dim, fc2_out_dim)
+        self.fc2_activation = nn.ReLU()
+
+        self.fc3 = nn.Linear(fc2_out_dim, n_classes)
+
         # For Q2.2 initalize batch normalization
         
-
+        
     def forward(self, x):
         x = x.reshape(x.shape[0], 3, 48, -1)
 
         # Implement execution of convolutional blocks 
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.conv3(x)
         
-        # Flattent output of the last conv block
+        """
+        # Flattent output of the last conv block - Q2.1
+        n_input_features = x.shape[1] * x.shape[2] * x.shape[3]
+        x = x.view(-1, n_input_features)
+        """
+
+        # Global Average Pooling
+        x = self.global_avg_pool(x)
+        x = x.view(x.size(0), -1)
         
         # Implement MLP part
+        x = self.fc1(x)
+        x = self.fc1_activation(x)
+        x = self.fc1_batch_norm(x)
+        x = self.fc1_dropout(x)
+        
+        x = self.fc2(x)
+        x = self.fc2_activation(x)
+
+        # Final classification layer
+        x = self.fc3(x)
         
         # For Q2.2 implement global averag pooling
         
-
         return F.log_softmax(x, dim=1)
  
 
@@ -123,7 +173,9 @@ def plot(epochs, plottable, ylabel='', name=''):
 
 
 def get_number_trainable_params(model):
-    raise NotImplementedError
+    model_parameters_cnn = filter(lambda p: p.requires_grad, model.parameters())
+    params_cnn = sum([np.prod(p.size()) for p in model_parameters_cnn])
+    return params_cnn
 
 
 def plot_file_name_sufix(opt, exlude):
@@ -165,10 +217,12 @@ def main():
         dataset, batch_size=opt.batch_size, shuffle=True)
     dev_X, dev_y = dataset.dev_X.to(opt.device), dataset.dev_y.to(opt.device)
     test_X, test_y = dataset.test_X.to(opt.device), dataset.test_y.to(opt.device)
+    n_classes = torch.unique(dataset.y).shape[0]
 
     # initialize the model
     model = CNN(
         opt.dropout,
+        n_classes,
         maxpool=not opt.no_maxpool,
         batch_norm=not opt.no_batch_norm
     ).to(opt.device)
