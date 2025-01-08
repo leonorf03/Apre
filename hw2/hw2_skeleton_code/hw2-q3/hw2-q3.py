@@ -54,7 +54,6 @@ def distance(str1, str2):
 
 
 def train(data, model, lr, n_epochs, checkpoint_name, max_len=50):
-    """
     model.train()
 
     train_iter, val_iter, test_iter = data
@@ -77,10 +76,17 @@ def train(data, model, lr, n_epochs, checkpoint_name, max_len=50):
             src_lengths = src_lengths.to(device)
 
             optimizer.zero_grad()
-            outputs, _ = model(src, src_lengths, tgt)
-            loss = criterion(
-                outputs.reshape(-1, outputs.shape[-1]), tgt[:, 1:].reshape(-1)
-            )
+            # Forward pass
+            outputs, _ = model(src, src_lengths, tgt[:, :-1])  # Exclude EOS token for tgt
+
+            # Align outputs and targets for loss computation
+            outputs = outputs[:, :tgt.size(1) - 1, :]  # Ensure outputs have the same sequence length as tgt[:, 1:]
+            outputs = outputs.reshape(-1, outputs.shape[-1])  # Flatten outputs for loss
+            targets = tgt[:, 1:].reshape(-1)  # Flatten targets (Exclude SOS token for tgt)
+
+            # Compute loss
+            loss = criterion(outputs, targets)
+
             loss.backward()
             optimizer.step()
 
@@ -97,64 +103,7 @@ def train(data, model, lr, n_epochs, checkpoint_name, max_len=50):
             torch.save(model.state_dict(), checkpoint_name)
 
         val_err_rates.append(val_err_rate)
-    """
-    model.train()
-    train_iter, val_iter, _ = data
-
-    # Loss and Optimizer
-    criterion = nn.CrossEntropyLoss(ignore_index=PAD_IDX)
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-
-    val_cer_rates = []
-    train_cer_rates = []
-    min_cer = float("inf")
-
-    for epoch in range(n_epochs):
-        model.train()
-        epoch_train_loss = 0
-
-        for src, tgt in train_iter:
-            src_lengths = (src != PAD_IDX).sum(1)
-            src, tgt = src.to(device), tgt.to(device)
-            src_lengths = src_lengths.to(device)
-
-            optimizer.zero_grad()
-
-            # Forward pass
-            outputs, _ = model(src, src_lengths, tgt[:, :-1])  # Exclude EOS token for tgt
-
-            # Reshape outputs and targets for loss computation
-            outputs = outputs.reshape(-1, outputs.shape[-1])
-            targets = tgt[:, 1:].reshape(-1)  # Exclude SOS token for tgt
-
-            # Compute loss
-            loss = criterion(outputs, targets)
-            loss.backward()
-            optimizer.step()
-
-            epoch_train_loss += loss.item()
-
-        # Calculate and store training CER
-        train_cer = epoch_train_loss / len(train_iter)
-        train_cer_rates.append(train_cer)
-
-        print(f"Epoch: [{epoch + 1}/{n_epochs}], Loss: {loss:.4f}")
-
-        # Validation step (calculate CER)
-        val_cer, _ = test(model, val_iter, max_len=max_len)
-        print(f"Validation CER: {val_cer:.4f}")
-
-        if val_cer < min_cer:
-            min_cer = val_cer
-            print(f"New best CER found: {min_cer:.4f}")
-            print("Saving model checkpoint.")
-            torch.save(model.state_dict(), checkpoint_name)
-
-        val_cer_rates.append(val_cer)
-
-    return min_cer, val_cer_rates, train_cer_rates
-
-    #return min_err_rate, val_err_rates
+    return min_err_rate, val_err_rates
 
 
 def generate(model, data_iter, max_len=50, p=None):
@@ -194,7 +143,7 @@ def generate(model, data_iter, max_len=50, p=None):
             for _ in range(max_len):
                 prev_token = predicted_sequence[-1]
 
-                output, dec_state = model.decoder(
+                output, dec_state, _= model.decoder(
                     prev_token, dec_state, encoder_outputs, src_lengths
                 )
                 logits = model.generator(output.view(-1))
@@ -363,7 +312,7 @@ def main(args):
 
     if args.mode == "train":
         print("Training...")
-        min_val_err, val_cer_rates, train_cer_rates = train(
+        min_val_err, val_cer_rates = train(
             data_iters,
             model,
             args.lr,
@@ -380,18 +329,12 @@ def main(args):
             label="Validation CER",
             color='blue'
         )
-        plt.plot(
-            np.arange(1, args.n_epochs + 1),
-            train_cer_rates,
-            label="Training CER",
-            color='orange'
-        )
 
         plt.xticks(np.arange(0, args.n_epochs + 1, step=2))
         plt.grid(True)
         plt.xlabel("Epochs")
         plt.ylabel("Error Rate")
-        plt.title("Validation and Training CER per Epoch")
+        plt.title("Validation CER per Epoch")
         plt.legend()
         plt.savefig(
             "attn_%s_err_rate.pdf" % (str(args.use_attn),),
