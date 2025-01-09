@@ -67,7 +67,7 @@ class CNN(nn.Module):
         self.conv3 = ConvBlock(channels[2], channels[3], maxpool=maxpool, batch_norm=batch_norm, dropout=dropout_prob)
         
         # Global Average Pooling layer
-        self.global_avg_pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.global_avg_pool = nn.AdaptiveAvgPool2d((1, 1)) if batch_norm else None
 
         # Initialize layers for the MLP block
         if batch_norm:
@@ -83,8 +83,6 @@ class CNN(nn.Module):
         self.fc2_activation = nn.ReLU()
 
         self.fc3 = nn.Linear(fc2_out_dim, n_classes)
-
-        # For Q2.2 initalize batch normalization
         
         
     def forward(self, x):
@@ -95,15 +93,14 @@ class CNN(nn.Module):
         x = self.conv2(x)
         x = self.conv3(x)
         
-        """
-        # Flattent output of the last conv block - Q2.1
-        n_input_features = x.shape[1] * x.shape[2] * x.shape[3]
-        x = x.view(-1, n_input_features)
-        """
-
-        # Global Average Pooling
-        x = self.global_avg_pool(x)
-        x = x.view(x.size(0), -1)
+        if self.global_avg_pool is None: 
+            # Flattent output of the last conv block - Q2.1
+            n_input_features = x.shape[1] * x.shape[2] * x.shape[3]
+            x = x.view(-1, n_input_features)
+        else:
+            # Global Average Pooling
+            x = self.global_avg_pool(x)
+            x = x.view(x.size(0), -1)
         
         # Implement MLP part
         x = self.fc1(x)
@@ -117,7 +114,6 @@ class CNN(nn.Module):
         # Final classification layer
         x = self.fc3(x)
         
-        # For Q2.2 implement global averag pooling
         
         return F.log_softmax(x, dim=1)
  
