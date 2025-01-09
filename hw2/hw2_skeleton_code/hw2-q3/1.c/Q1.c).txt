@@ -1,0 +1,13 @@
+Test CER: 0.2340, Test WER: 0.7570
+Printing first 10 examples with multiple predictions:
+('Jingchuan', {'gingchaon', 'Cingquian', 'gingquint'})
+('scare', {'scar', 'scare'})
+('glossal', {'glossal', 'glossel'})
+('touchedness', {'tutchedness', 'tutchednis', 'tutudiness'})
+('alkaloses', {'allacioses', 'alcalocise', 'alclausiose'})
+('companions', {'companians', 'companions'})
+('Fingal', {'fingal', 'fingaul'})
+('grievances', {'greavances', 'grivances'})
+('Bronx', {'Branks', 'bronks'})
+('yokel', {'Yochel', 'yocal', 'yokel'})
+Test WER@3: 0.6520

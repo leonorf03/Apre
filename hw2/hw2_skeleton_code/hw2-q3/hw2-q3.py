@@ -24,6 +24,14 @@ from models import Encoder, Decoder, Seq2Seq, BahdanauAttention, reshape_state
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# 1.a python hw2-q3.py train --checkpoint_name no-attn.pt
+#     python hw2-q3.py test --checkpoint_name no-attn.pt
+
+# 1.b python hw2-q3.py train --use_attn --checkpoint_name attn.pt
+#     python hw2-q3.py test --use_attn --checkpoint_name attn.pt
+
+# 1.c python hw2-q3.py test --use_attn --checkpoint_name attn.pt --topp 0.8
+
 
 def configure_seed(seed):
     random.seed(seed)
@@ -245,7 +253,16 @@ def nucleus_sampling(logits, p=0.8):
     # 3. Rescale the distribution and sample from the resulting set of tokens.
     # Implementation of the steps as described above:
 
-    raise NotImplementedError("Add your implementation.")
+    probs = torch.softmax(logits, dim=-1)
+    sorted_probs, sorted_indices = torch.sort(probs, descending=True)
+    cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
+    cutoff_index = (cumulative_probs > p).nonzero(as_tuple=True)[0][0]
+    top_p_probs = sorted_probs[: cutoff_index + 1]
+    top_p_indices = sorted_indices[: cutoff_index + 1]
+    top_p_probs /= top_p_probs.sum()  # Normalize probabilities
+    sampled_index = torch.multinomial(top_p_probs, num_samples=1)
+    next_token = top_p_indices[sampled_index]
+    return next_token
 
 
 def main(args):
@@ -343,7 +360,7 @@ def main(args):
         plt.show()
     else:
         print("Testing...")
-
+        """
         model.load_state_dict(torch.load(checkpoint_name, weights_only=True))
 
         test_cer, test_wer = test(model, test_iter, p=args.topp)
@@ -352,6 +369,21 @@ def main(args):
         if args.topp is not None:
             test_wer_at_k = compute_wer_at_k(model, test_iter, p=args.topp, k=args.k)
             print("Test WER@{}: {:.4f}".format(args.k, test_wer_at_k))
+        """
+        if not args.use_attn:
+            model.load_state_dict(torch.load(checkpoint_name, weights_only=True))
+        else:
+            checkpoint = torch.load("attn.pt")
+            model.load_state_dict(checkpoint, strict=False)
+
+        test_cer, test_wer = test(model, test_iter, p=args.topp)
+
+        print("Test CER: %.4f, Test WER: %.4f" % (test_cer, test_wer))
+
+        if args.topp is not None:
+            test_wer_at_k = compute_wer_at_k(model, test_iter, p=args.topp, k=args.k)
+            print("Test WER@{}: {:.4f}".format(args.k, test_wer_at_k))
+        #"""
 
 
 if __name__ == "__main__":

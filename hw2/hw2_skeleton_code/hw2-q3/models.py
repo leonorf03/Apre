@@ -163,7 +163,6 @@ class Decoder(nn.Module):
             output, dec_state = self.lstm(input_t, dec_state)
 
             if self.attn is not None:
-                print("\n\n\n\n\n\n\n\n\n\n\n\n")
                 # Apply attention mechanism
                 output, attn_weights = self.attn(
                     output.squeeze(1), encoder_outputs, src_lengths
