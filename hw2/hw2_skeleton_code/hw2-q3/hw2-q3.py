@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 import os
 
-if "DISPLAY" in os.environ:  # If running on a system with GUI support
-    matplotlib.use('TkAgg')  # or any other interactive backend
+if "DISPLAY" in os.environ:  
+    matplotlib.use('TkAgg')  
 else:
     matplotlib.use('Agg')
 
@@ -67,8 +67,6 @@ def train(data, model, lr, n_epochs, checkpoint_name, max_len=50):
     train_iter, val_iter, test_iter = data
 
     # Loss and Optimizer
-    # Softmax is internally computed.
-    # Set parameters to be updated.
     criterion = nn.CrossEntropyLoss(ignore_index=PAD_IDX)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
@@ -85,12 +83,12 @@ def train(data, model, lr, n_epochs, checkpoint_name, max_len=50):
 
             optimizer.zero_grad()
             # Forward pass
-            outputs, _ = model(src, src_lengths, tgt[:, :-1])  # Exclude EOS token for tgt
+            outputs, _ = model(src, src_lengths, tgt[:, :-1])  
 
             # Align outputs and targets for loss computation
-            outputs = outputs[:, :tgt.size(1) - 1, :]  # Ensure outputs have the same sequence length as tgt[:, 1:]
-            outputs = outputs.reshape(-1, outputs.shape[-1])  # Flatten outputs for loss
-            targets = tgt[:, 1:].reshape(-1)  # Flatten targets (Exclude SOS token for tgt)
+            outputs = outputs[:, :tgt.size(1) - 1, :]  
+            outputs = outputs.reshape(-1, outputs.shape[-1])  
+            targets = tgt[:, 1:].reshape(-1)  
 
             # Compute loss
             loss = criterion(outputs, targets)
@@ -132,8 +130,6 @@ def generate(model, data_iter, max_len=50, p=None):
             src, tgt = src.to(device), tgt.to(device)
             src_lengths = src_lengths.to(device)
 
-            # Initially, the generated sequence consists of only a start-of-sequence
-            # token. Each subsequent generated token will be appended to this sequence.
             sos_token = torch.full(
                 [data_iter.batch_size, 1],
                 SOS_IDX,
@@ -160,7 +156,6 @@ def generate(model, data_iter, max_len=50, p=None):
 
                 predicted_sequence.append(next_token.view(1, 1))
 
-                # Stop symbol index
                 if int(next_token) == EOS_IDX:
                     break
 
@@ -339,7 +334,7 @@ def main(args):
 
         print("Best validation error rate: %.4f" % (min_val_err))
 
-        # Plot both Validation CER and Training CER
+        # Plot Validation CER
         plt.plot(
             np.arange(1, args.n_epochs + 1),
             val_cer_rates,
@@ -360,16 +355,6 @@ def main(args):
         plt.show()
     else:
         print("Testing...")
-        """
-        model.load_state_dict(torch.load(checkpoint_name, weights_only=True))
-
-        test_cer, test_wer = test(model, test_iter, p=args.topp)
-        print("Test CER: %.4f, Test WER: %.4f" % (test_cer, test_wer))
-
-        if args.topp is not None:
-            test_wer_at_k = compute_wer_at_k(model, test_iter, p=args.topp, k=args.k)
-            print("Test WER@{}: {:.4f}".format(args.k, test_wer_at_k))
-        """
         if not args.use_attn:
             model.load_state_dict(torch.load(checkpoint_name, weights_only=True))
         else:
@@ -383,7 +368,6 @@ def main(args):
         if args.topp is not None:
             test_wer_at_k = compute_wer_at_k(model, test_iter, p=args.topp, k=args.k)
             print("Test WER@{}: {:.4f}".format(args.k, test_wer_at_k))
-        #"""
 
 
 if __name__ == "__main__":
